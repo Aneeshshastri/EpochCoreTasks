@@ -68,3 +68,14 @@ By extracting and visualizing the attention weights from the `DigitRanker` archi
 
 - **Optimizer Details**: An AdamW optimizer with weight decay 1e-4 and a cosine decay rate schedule was used for training. The model was trained for 200 epochs with a patience of 10 (for EarlyStopping).
 
+
+## Note:
+
+### Models Review:
+
+This task is mostly supposed to be an experiment to understand how attention works, and it's highly impractical to ever use this model over sorting algorithms. However experimentation reveals why attention is so powerful for globabl reasoning tasks.
+
+
+### Note on LLM usage:
+
+Aside from research, and using the free github copilot's code autocomplete feature, I have used LLMs to generate code templates for README and Demo files, and comments for some other files.
