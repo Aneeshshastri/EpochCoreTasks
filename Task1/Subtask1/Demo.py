@@ -13,8 +13,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH=os.path.join(BASE_DIR,"Models/The_Final_Transformer")
 @st.cache_resource
 def load_model():
-    """Initializes the model architecture and loads weights via Orbax."""
-    # Initialize abstract model with the optimized parameters (3L, 8H, 64d)
+    #Initializes the model architecture and loads weights via Orbax.
     best_params={'num_layers': 2, 'num_heads': 16, 'd_k': 4, 'learning_rate': 0.0036534068309100557}
     d_model = best_params['d_k']*best_params['num_heads']
     n_heads = best_params['num_heads']
@@ -32,24 +31,22 @@ def load_model():
     nnx.update(model, restored_state)
     return model
 
-@jax.jit
+@nnx.jit
 def run_inference(model, input_tensor):
     return model(input_tensor)
 
 
 # --- 2. User Interface ---
 st.title("Transformer Sequence Sorter")
-st.markdown("Analyzing the routing logic of a 3-Layer, 8-Head architecture.")
+st.markdown("Analyzing the routing logic of a 2-Layer, 16-Head architecture.")
 
-# Initialize model
+#load model
 model = load_model()
 
-# Input area
+# User Input
 st.subheader("Input Sequence")
 st.write("Enter exactly 10 integers, separated by spaces or commas.")
 user_input = st.text_input("Sequence:", "317, 469, 685, 72, 142, 661, 287, 980, 885, 152")
-
-# --- 3. Execution Trigger ---
 if st.button("Sort & Analyze"):
     try:
         # Parse input
@@ -64,23 +61,51 @@ if st.button("Sort & Analyze"):
         
         st.success("Input valid. Proceeding to inference...")
         
-        logits = run_inference(model, input_tensor)
-    # Get rank (argmax of logits)
+        logits = run_inference(model, input_tensor) 
         predictions = jnp.argmax(logits, axis=-1)
         
         st.subheader("Results")
         st.write(f"Input Sequence: {input_seq}")
         st.write(f"Predicted Ranks: {predictions[0].tolist()}")
         
-        # --- Visualization ---
-        # Extract attention from the last layer (example)
-        # Note: You may need to adjust the access path based on how nnx stores Intermediates
-        attn_weights = model.transformer_blocks[-1].mha.sown_attn.value
-        
-        st.subheader("Attention Heatmap (Last Layer)")
-        fig, ax = plt.subplots()
-        sns.heatmap(attn_weights[0, 0, :, :], annot=True, ax=ax, cmap="viridis")
-        st.pyplot(fig)
+        # Visualization 
+        num_layers = len(model.transformer_blocks)
+        n_heads = model.transformer_blocks[0].mha.n_heads
+        labels = [str(int(val)) for val in input_seq]
+        #split into 2 parts for better visualization
+        for part in range(2):
+            start_head = part * 8
+            end_head = start_head + 8
+            
+            st.subheader(f"Attention Heatmaps (Heads {start_head+1}-{end_head})")
+            fig, axes = plt.subplots(num_layers, 8, figsize=(48, 12))
+            if num_layers == 1:
+                axes = np.expand_dims(axes, axis=0)
+                
+            for l_idx, block in enumerate(model.transformer_blocks):
+                attn_weights = block.mha.sown_attn[...]
+                attn_weights = np.array(attn_weights[0])  # (n_heads, 10, 10)
+                
+                for h_idx in range(start_head, end_head):
+                    ax = axes[l_idx, h_idx - start_head]
+                    sns.heatmap(
+                        attn_weights[h_idx], 
+                        annot=True, 
+                        fmt=".2f", 
+                        cmap="viridis", 
+                        xticklabels=labels, 
+                        yticklabels=labels, 
+                        ax=ax,
+                        cbar=False,
+                        annot_kws={"size": 14}
+                    )
+                    ax.set_title(f"Layer {l_idx+1} Head {h_idx+1}", fontsize=18)
+                    ax.set_xlabel("Key", fontsize=16)
+                    ax.set_ylabel("Query", fontsize=16)
+                    ax.tick_params(axis='both', which='major', labelsize=14)
+                    
+            plt.tight_layout()
+            st.pyplot(fig)
             
     except ValueError:
         st.error("Invalid input. Please ensure all values are integers.")

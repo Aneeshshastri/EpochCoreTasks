@@ -61,6 +61,8 @@ class MHSA(nnx.Module):
         self.w_v = nnx.Linear(d_model, self.d_k, use_bias=False, rngs=rngs)
         self.w_o = nnx.Linear(self.d_k, d_model, use_bias=False, rngs=rngs)
         self.RoPE=RoPE(head_dim=self.head_size,max_seq_len=max_seq_len)
+
+        self.sown_attn = nnx.Intermediate(None)
         
     def __call__(self, x: jax.Array, mask: jax.Array | None = None) -> jax.Array:
         """
@@ -111,6 +113,7 @@ class TransformerBlock(nnx.Module):
         self.ffn_norm = nnx.RMSNorm(d_model, rngs=rngs)
         hidden_dim = int((8/3) * d_model) 
         self.ffn = FeedForwardNN(d_model, hidden_dim, rngs)
+        
 
     def __call__(self, x: jax.Array, mask: jax.Array | None = None) -> jax.Array:
         """
