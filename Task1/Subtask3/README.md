@@ -4,7 +4,7 @@
 
 ## Architecture Overview
 
-* **picoGPT (Decoder-Only Transformer):** Implemented natively in JAX, Flax `nnx`, and. Features Rotary Position Embeddings (RoPE), Multi-Head Self-Attention, Standard Feed forward neural network, and dropout layers.
+* **picoGPT (Decoder-Only Transformer):** Implemented natively in JAX, Flax `nnx`, and optax+orbax for training and model saving. Features Rotary Position Embeddings (RoPE), Multi-Head Self-Attention, Standard Feed forward neural network, and dropout layers.
 * **Statistical Baseline:** An $N$-gram Markov chain built with (`collections.Counter`) hashing and NumPy memory striding. It establishes the mathematical perplexity floor( of around 2k).
 
 * **Tokenization:** A custom C++ Byte-Pair Encoding (BPE) tokenizer bound to Python via `pybind11`.
