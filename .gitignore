@@ -2,7 +2,7 @@
 __pycache__/
 *.py[codz]
 *$py.class
-
+Subtask2/*
 # C extensions
 *.so
 
